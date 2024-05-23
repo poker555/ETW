@@ -52,7 +52,7 @@ namespace ConsoleApp1
 
             // 讀取 XML 配置文件
             //var config = XDocument.Load("etwrole.xml");
-            var config = XDocument.Load(@"C:\Users\brad9\Desktop\ETW2\ConsoleApp1\etwrole.xml");
+            var config = XDocument.Load(@"C:\Users\brad9\Desktop\ETW-logplatform project\ETW\ConsoleApp1\etwrole.xml");
             var watcherConfig = config.Element("Configuration").Element("FileSystemWatcherConfig");
             var processMonitorConfig = config.Element("Configuration").Element("ProcessMonitorConfig");
             var blacklistrConfig = config.Element("Configuration").Element("blacklist");
@@ -115,7 +115,8 @@ namespace ConsoleApp1
             {
                 var processEvent = new ProcessEvent
                 {
-                    ProcessName = data.ProcessName,
+                    //如果processNmae為空，給Null值
+                    ProcessName = string.IsNullOrEmpty(data.ProcessName) ? "Null" : data.ProcessName,
                     ProcessId = data.ProcessID,
                     CommandLine = data.CommandLine,
                     Timestamp = DateTime.UtcNow,
@@ -131,7 +132,7 @@ namespace ConsoleApp1
             {
                 var processEvent = new ProcessEvent
                 {
-                    ProcessName = data.ProcessName,
+                    ProcessName = string.IsNullOrEmpty(data.ProcessName) ? "Null" : data.ProcessName,
                     ProcessId = data.ProcessID,
                     CommandLine = data.CommandLine,
                     Timestamp = DateTime.UtcNow,
@@ -171,8 +172,9 @@ namespace ConsoleApp1
                             EventName = data.EventName,
                             Timestamp = DateTime.UtcNow
                         };
-                        // 这里打印所有 TCP/IP 事件的信息
+
                         Console.WriteLine($"Event Name: {data.EventName}");
+
                         foreach (var payloadName in data.PayloadNames)
                         {
                             var payloadValue = data.PayloadByName(payloadName);
@@ -181,18 +183,24 @@ namespace ConsoleApp1
                                 // 如果是IPv4地址字段，则进行转换
                                 if (payloadName == "SourceIPv4Address" || payloadName == "DestIPv4Address")
                                 {
-
                                     // 将整数形式的IP地址转换为点分十进制格式
                                     var ipAddressString = ConvertToIPAddressString((int)payloadValue);
                                     Console.WriteLine($" {payloadName}: {ipAddressString}");
+
+                                    if (payloadName == "SourceIPv4Address")
+                                    {
+                                        tcpIpEvent.SourceIPv4Address = ipAddressString;  // 設定來源IP地址
+                                    }
+                                    else if (payloadName == "DestIPv4Address")
+                                    {
+                                        tcpIpEvent.DestIPv4Address = ipAddressString;  // 設定目的IP地址
+                                    }
 
                                     // 检查是否在黑名单中
                                     if (blacklistIPs.Contains(ipAddressString))
                                     {
                                         Console.WriteLine($"Detected blacklisted IP address: {ipAddressString}");
                                     }
-
-                                    
                                 }
                                 else
                                 {
